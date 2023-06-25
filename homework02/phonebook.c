@@ -70,7 +70,7 @@ void main() {
     int menuChoose, kill = 1;
     while (1)
     {
-        printf("Menu:\n1. Show contacts;\n2. Add contacts;\n"
+        printf("Menu:\n1. Show contacts;\n2. Add contacts;\n");
         printf("3. Delete contact: \nType options: ");
         scanf("%d", &menuChoose);
         switch(menuChoose) {
