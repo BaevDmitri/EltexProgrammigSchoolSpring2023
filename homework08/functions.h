@@ -11,7 +11,7 @@
 #define WORDS_IN_COMMAND 15  
 #define STRING_SIZE 80       
 
-int readyForExec(char* commandString, int* argC1, int* argC2, char** argV1, char** argV2);
-void firstExec(int pipePosition, int filedes[], int argC1, char* argV1[]);      
-void secondExec(int filedes[], int argC2, char* argV2[]);                       
+int readyForExec(char*, int*, int*, char**, char**);
+void firstExec(int, int*, int, char**);      
+void secondExec(int*, int, char**);                       
 #endif
