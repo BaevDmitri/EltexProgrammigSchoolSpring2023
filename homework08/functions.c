@@ -1,5 +1,9 @@
 #include "functions.h"
 
+/* функция анализа и разбиения на токены введенной команды
+ * char* commandString - считанная с экрана команда
+ * int* argC1, int* argC2 - переменные, хранящие количество токенов команды
+ * char** argV1, char** argV2 - массивы токенов */
 int readyForExec(char* commandString, int* argC1, int* argC2, char** argV1, char** argV2)
 {                                                                               
     int pipePosition = 0;                                                       
