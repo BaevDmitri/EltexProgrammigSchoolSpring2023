@@ -10,8 +10,8 @@ void main()
     keypad(stdscr, TRUE); /* включаем поддержку клавиш */
     refresh();
     
+    /* определяем размер терминала и делим его на два окна */
     struct winsize w = consoleSize(); 
-    
     WINDOW* topwnd = newwin(w.ws_row*0.85, w.ws_col, 0, 0);
     WINDOW* botwnd = newwin(w.ws_row*0.15, w.ws_col, w.ws_row*0.85, 0);
     /* присваиваем обоим окнам цветовую пару: циан-черный */ 
@@ -19,14 +19,17 @@ void main()
     wbkgd(botwnd, COLOR_PAIR(1)); 
     refresh();
 
+    /* запрашиваем у пользователя его имя */
     char userName[MSG_SIZE];
-    char userIDbuf[MSG_SIZE];
     wrefresh(botwnd);
     wprintw(botwnd, "Type name: ");
     wgetnstr(botwnd, userName, SCAN_USER_SIZE); 
     wscanw(botwnd, "%s", userName);
     wrefresh(botwnd); 
-     
+    
+    /* открываем очередь регистрации на сервере и передаем в неё имя пользователя 
+     * в ответ получаем очередь для получения сообщений
+     * после чего закрываем очередь */
     mqd_t regMqd;
     regMqd = mq_open(JOIN_QUEUE, O_RDWR);
     if (regMqd == (mqd_t) -1)                                       
@@ -35,12 +38,13 @@ void main()
         endwin();        
         exit(EXIT_FAILURE);                                         
     }
-
+    char userIDbuf[MSG_SIZE];
     registration(regMqd, userName, userIDbuf, botwnd);
-
     if (mq_close(regMqd) == -1)       
         perror("message queue close");
     
+    /* открываем очередь отправки сообщений
+     * на основе полученного имени очереди открываем очередь получения */
     mqd_t chatSendMqd;                        
     chatSendMqd = mq_open(CHAT_QUEUE, O_RDWR);
     if (chatSendMqd == (mqd_t) -1)            
@@ -66,7 +70,9 @@ void main()
     wprintw(topwnd, "%s", queue);
     wrefresh(topwnd);           
 
-
+    /* для создания потоков отправки и получения
+     * иницилизируем и заполняем структуры для передачи парамеров
+     * в функции потоков */
     struct msgPthr* recieveStruct;
     recieveStruct = malloc(sizeof(struct msgPthr));
     if(recieveStruct == NULL)
@@ -90,6 +96,7 @@ void main()
     sendStruct->chatMqd = &chatSendMqd;      
     sendStruct->name = userName;
 
+    /* потоки отправки и получения сообщений */
     pthread_t receiveThread;
     pthread_t sendThread;
     int *s;
@@ -122,7 +129,7 @@ void main()
         exit(EXIT_FAILURE);                         
     }                                               
 
-
+    /* закрываем все очереди, чистим выделенную память */
     if (mq_close(chatSendMqd) == -1)   
         perror("message queue close");
     if (mq_close(chatRecieveMqd) == -1)  
@@ -130,5 +137,4 @@ void main()
     endwin();
     free(sendStruct);
     free(recieveStruct);
-    //endwin();
 }

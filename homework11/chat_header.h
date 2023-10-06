@@ -10,8 +10,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <ncurses.h> 
-#include <sys/ioctl.h> 
-#include <unistd.h>
+#include <sys/ioctl.h>
 
 #define JOIN_QUEUE "/main_chat.c"
 #define CHAT_QUEUE "/main_client.c"

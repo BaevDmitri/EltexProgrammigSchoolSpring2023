@@ -1,5 +1,7 @@
 #include "chat_header.h"
-
+/* Для клиента */
+/* функция запроса параметров окна терминала 
+ * на выходе получаем структуру с параметрами */
 struct winsize consoleSize()                       
 {                                                  
     struct winsize w;                              
@@ -9,7 +11,8 @@ struct winsize consoleSize()
         perror("ioctl");                           
     return w;
 }
-
+/* функция получения и вывода на экран сообщений в клиенте 
+ * на вход подается void указатель на структуру с параметрами */
 void *receiveMsg(void *args)
 {
     struct msgPthr* recieveStruct = (struct msgPthr *)args;
@@ -29,22 +32,26 @@ void *receiveMsg(void *args)
 
     return NULL;
 }
-
+/* функция отправки на сервер сообщений в клиента 
+ * на вход подается void указатель на структуру с параметрами */
 void *sendMsg(void *args)
 {
     struct msgPthr* sendStruct = (struct msgPthr*)args;
     while(1)                                                 
-    {                                                        
+    {                
+        /* считываем строку сообщения */                                        
         char chatMsg[MSG_SIZE] = "";                         
         char scanMsgSize[SCAN_MSG_SIZE] = "";                
         wgetnstr(sendStruct->wnd, scanMsgSize, SCAN_MSG_SIZE);
+        /* модифицируем добавляя имя пользователя */
         strcat(chatMsg, sendStruct->name);
         strcat(chatMsg, ": ");
         strcat(chatMsg, scanMsgSize);
         strcat(chatMsg, "\n");
+        /* очищаем окно ввода */
         wclear(sendStruct->wnd);                                      
         wrefresh(sendStruct->wnd);                                    
-                                                             
+                                              
         if (mq_send(*(sendStruct->chatMqd), chatMsg, MSG_SIZE, 1) == -1)
             perror("send");                                  
     }                                                        
@@ -52,6 +59,12 @@ void *sendMsg(void *args)
     return NULL;
 }
 
+/* функция регистрации на сервере клиентом 
+ * на вход отдаем:
+ * номер очереди для отправки и получения сообщений;
+ * буферы для имени пользователя и номера очереди;
+ * окно для вывода сообщений.
+ * возвращает ошибки perror функций*/
 void registration(mqd_t regMqd, char* userName, char* userIDbuf, WINDOW* botwnd)
 {
     unsigned int regPrio = 1;
@@ -94,6 +107,11 @@ void registration(mqd_t regMqd, char* userName, char* userIDbuf, WINDOW* botwnd)
 
 
 /* Для сервера */
+/* Функция инициализации очередей для пользователей
+ * Передаем:
+ * указатель на массив структур информации о пользователях;
+ * структуру параметров очереди. 
+ * Получаем ошибки perror функций. */
 void createQueue(struct chatUser (*users)[MAX_USERS], struct mq_attr regQueue)
 {
     int numQueue = 0;
@@ -127,6 +145,9 @@ void createQueue(struct chatUser (*users)[MAX_USERS], struct mq_attr regQueue)
     }
 }
 
+/* Функция потока очереди регистрации 
+ * На вход отдаем указатель на структуру с параметрами пользователей 
+ * На выход получаем ошибки perror */
 void *joinQueue(void *args)
 {
     struct msgPthrServer* join = (struct msgPthrServer*)args;
@@ -151,6 +172,9 @@ void *joinQueue(void *args)
     return NULL;
 }
 
+/* Функция потока пересылки всем пользователям получаемых сообщений
+ * На вход отдаем указатель на структуру с параметрами пользователей 
+ * На выход получаем ошибки perror */
 void *chatQueue(void *args)
 {
     struct msgPthrServer* chat = (struct msgPthrServer*)args;
@@ -175,6 +199,12 @@ void *chatQueue(void *args)
     }
 }
 
+/* Функция инициализации стуктуры для передачи в потоки 
+ * На вход:
+ * Указатель на структуру параметров пользователей;
+ * Указатель на очередь. 
+ * На выходе:
+ * Указатель на структуру.*/
 struct msgPthrServer* createPthreadStruct(struct chatUser (*users)[MAX_USERS], mqd_t* Mqd)
 {
     struct msgPthrServer* p;
@@ -189,6 +219,7 @@ struct msgPthrServer* createPthreadStruct(struct chatUser (*users)[MAX_USERS], m
     return p;
 }
 
+/* Функция закрытия всех очередей */
 void closeAll(mqd_t regMqd, mqd_t chatResMqd, struct chatUser (*users)[MAX_USERS])
 {
     if (mq_close(regMqd) == -1)

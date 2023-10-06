@@ -2,10 +2,17 @@
 
 void main()
 {
+    /* задаем параметры для очереди:
+     * максимальное количество сообщений, находящихся в очереди;
+     * размер сообщений */
     struct mq_attr regQueue;          
     (&regQueue)->mq_maxmsg = MAX_MSG;                 
     (&regQueue)->mq_msgsize = MSG_SIZE;
-    
+
+    /* инциализируем и открываем очереди 
+     * регистрации;
+     * приема сообщений;
+     * рассылки сообщений для пользователей */
     mqd_t regMqd;
     regMqd = mq_open(JOIN_QUEUE, O_CREAT | O_RDWR, 0660, &regQueue);
     if (regMqd == (mqd_t) -1)
@@ -23,9 +30,12 @@ void main()
     }
     struct chatUser users[MAX_USERS]; 
     createQueue(&users, regQueue);
+
+    /* инициализируем и заполняем структуры для потоков очередей */
     struct msgPthrServer* joinStruct = createPthreadStruct(&users, &regMqd);
     struct msgPthrServer* chatStruct = createPthreadStruct(&users, &chatResMqd);
 
+    /* создаем и входим в сами потоки */
     pthread_t joinThread;
     int *s;
     if(pthread_create(&joinThread, NULL, joinQueue, (void*)joinStruct) != 0)
@@ -52,9 +62,8 @@ void main()
         perror("pthread chat join");                     
         exit(EXIT_FAILURE);                         
     }
-
+    /* хакрываем все очереди и чистим память */
     closeAll(regMqd, chatResMqd, &users);
-
     free(joinStruct);
     free(chatStruct);
 }
