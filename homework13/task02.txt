@@ -1,0 +1,4 @@
+  28811 user      20   0    2640   1024   1024 S   0,0   0,0   0:00.00 task02
+user@BaevDmitry:~$ kill -10 28811
+user@BaevDmitry:~$ ./task02
+test
