@@ -1,0 +1,46 @@
+/* проверяем состояние SecureBoot, т.к. при его активном статусе модули ядра не грузятся */
+user@BaevDmitry:~/module$ mokutil --sb-state
+SecureBoot disabled
+Platform is in Setup Mode
+/* загружаем модуль */
+user@BaevDmitry:~/module$ sudo insmod test01.ko
+[sudo] пароль для user: 
+/* проверяем что модуль активен*/
+user@BaevDmitry:~/module$ lsmod | grep test01
+test01                 16384  0
+/* выгружаем модуль */
+user@BaevDmitry:~/module$ sudo rmmod test01
+/* проверяем логи */
+user@BaevDmitry:~/module$ sudo dmesg
+[  302.424030] Module is loaded.
+[  431.143049] Module is unloaded.
+
+/* загружаем второй модуль */
+user@BaevDmitry:~/module$ sudo insmod test02.ko
+[sudo] пароль для user: 
+user@BaevDmitry:~/module$ sudo dmesg | grep loaded
+[ 6199.679318] Test module is loaded.
+user@BaevDmitry:~/module$ sudo dmesg | grep Major
+[ 6199.679330] Major number is 510.
+user@BaevDmitry:~/module$ cd /dev
+user@BaevDmitry:/dev$ sudo mknod -m 0666 test02 c 510 0
+user@BaevDmitry:/dev$ ls -la | grep test02
+crw-rw-rw-   1 root root    510,     0 ноя 15 03:01 test02
+user@BaevDmitry:/dev$ 
+
+/* загружаем третий модуль */
+/* proc */
+user@BaevDmitry:/$ cd /proc/
+user@BaevDmitry:/proc$ ls | grep test
+test
+user@BaevDmitry:/proc$ cat test
+Hello!
+user@BaevDmitry:/proc$ sudo echo "1234" > test
+user@BaevDmitry:/proc$ cat test
+1234
+/* sys */
+user@BaevDmitry:/$ cd /sys/koblect_test/
+user@BaevDmitry:/sys/kernel/koblect_test$ ls
+test_string
+user@BaevDmitry:/sys/kernel/koblect_test$ cat test_string 
+1234
